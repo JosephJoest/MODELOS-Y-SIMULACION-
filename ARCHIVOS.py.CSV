@@ -1,0 +1,80 @@
+import pandas as pd
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+# Función para cargar el archivo CSV
+def cargar_csv():
+    archivo = filedialog.askopenfilename(filetypes=[("Archivos CSV", "*.csv")])
+    if archivo:
+        df = pd.read_csv(archivo)
+        return df, archivo
+    else:
+        return None, None
+
+# Función para guardar el archivo CSV con las columnas seleccionadas
+def guardar_csv(df, columnas_seleccionadas, archivo_original):
+    # Crear un nuevo DataFrame con las columnas seleccionadas
+    nuevo_df = df[columnas_seleccionadas]
+    
+    # Guardar el archivo modificado con un nuevo nombre
+    archivo_guardado = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("Archivos CSV", "*.csv")])
+    if archivo_guardado:
+        nuevo_df.to_csv(archivo_guardado, index=False)
+        messagebox.showinfo("Éxito", f"Archivo guardado como: {archivo_guardado}")
+    else:
+        messagebox.showwarning("Advertencia", "No se guardó el archivo.")
+
+# Función para mostrar las columnas y permitir que el usuario seleccione
+def seleccionar_columnas(df):
+    columnas = df.columns.tolist()
+    columnas_seleccionadas = []
+
+    def actualizar_seleccion():
+        columnas_seleccionadas.clear()
+        for idx, var in enumerate(checkbox_vars):
+            if var.get():
+                columnas_seleccionadas.append(columnas[idx])
+        ventana_seleccion.quit()  # Cierra la ventana al hacer clic en "Aceptar"
+
+    # Crear la interfaz para seleccionar columnas
+    ventana_seleccion = tk.Toplevel()
+    ventana_seleccion.title("Seleccionar Columnas")
+    
+    checkbox_vars = []
+    for columna in columnas:
+        var = tk.BooleanVar()
+        checkbox_vars.append(var)
+        tk.Checkbutton(ventana_seleccion, text=columna, variable=var).pack(anchor='w')
+
+    # Botón de Aceptar para cerrar la ventana
+    tk.Button(ventana_seleccion, text="Aceptar", command=actualizar_seleccion).pack()
+    ventana_seleccion.mainloop()  # Esto mantiene la ventana abierta hasta que se presione "Aceptar"
+
+    return columnas_seleccionadas
+
+# Función principal
+def main():
+    root = tk.Tk()
+    root.withdraw()  # Oculta la ventana principal de Tkinter
+
+    # Cargar el archivo CSV
+    df, archivo_original = cargar_csv()
+    if df is None:
+        messagebox.showerror("Error", "No se pudo cargar el archivo CSV.")
+        return
+
+    # Seleccionar las columnas que se desean mantener
+    columnas_seleccionadas = seleccionar_columnas(df)
+    if not columnas_seleccionadas:
+        messagebox.showerror("Error", "No se seleccionaron columnas.")
+        return
+
+    # Guardar la nueva copia del archivo CSV
+    guardar_csv(df, columnas_seleccionadas, archivo_original)
+
+    # Mostrar mensaje de éxito
+    messagebox.showinfo("Proceso completado", "Se ha generado la copia del archivo con las columnas seleccionadas.")
+    print("Archivo modificado guardado exitosamente.")
+
+if __name__ == "__main__":
+    main()
